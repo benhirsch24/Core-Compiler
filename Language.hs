@@ -25,6 +25,8 @@ recursive, nonRecursive :: IsRec
 recursive = True
 nonRecursive = False
 
+data PartialExpr = NoOp | FoundOp Name CoreExpr
+
 bindersOf :: [(a,b)] -> [a]
 bindersOf defns = [name | (name, rhs) <- defns]
 
