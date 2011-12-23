@@ -112,7 +112,12 @@ pEmpty v toks = [(v, toks)]
 
 -- ([Token] -> [(a, [Token])]) -> [Token] -> [(a, [Token])]
 pOneOrMore :: Parser a -> Parser [a]
-pOneOrMore p toks = pThen (:) p (pZeroOrMore p) toks
+pOneOrMore p toks = takeFullParse $ pThen (:) p (pZeroOrMore p) toks
+   where
+   takeFullParse [] = []
+   takeFullParse all@((vs, toks):rest)
+      | length (p toks) == 0 = [(vs, toks)]
+      | otherwise = takeFullParse rest
 
 pApply :: Parser a -> (a -> b) -> Parser b
 pApply p f toks = [ (f v, toks1) | (v, toks1) <- p toks]
