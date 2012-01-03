@@ -1,4 +1,4 @@
-module PrettyPrinter where
+module PrettyPrint where
 import Language
 import Iseq
 

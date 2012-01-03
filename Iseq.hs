@@ -9,8 +9,7 @@ data Iseq = INil
 
 flatten :: Int -> [(Iseq,Int)] -> String
 flatten _ [] = ""
-flatten col ((INewline, indent) : seqs) = '\n' : (space indent) ++ (flatten indent seqs)
-   where space i = take i (repeat ' ')
+flatten col ((INewline, indent) : seqs) = '\n' : (take indent $ repeat ' ') ++ (flatten indent seqs)
 flatten col ((IIndent seq, indent) : seqs) = flatten col ((seq, col):seqs)
 flatten col ((IAppend seq1 seq2, indent) : seqs) = flatten col ((seq1, col) : (seq2, col) : seqs)
 flatten col ((IStr str, indent) : seqs) = str ++ (flatten col seqs)
@@ -20,7 +19,7 @@ iNil :: Iseq -- empty iseq
 iNil = INil
 
 iStr :: String -> Iseq
-iStr str = IStr str
+iStr = IStr
 
 iNum :: Int -> Iseq
 iNum n = iStr (show n)
@@ -49,8 +48,9 @@ iConcat [] = INil
 iConcat (seq:rest) = seq `iAppend` iConcat rest
 
 iInterleave :: Iseq -> [Iseq] -> Iseq
-iInterleave _ [] = iNil
-iInterleave sep (seq:rest) = seq `iAppend` sep `iAppend` (iInterleave sep rest)
+iInterleave sep [] = sep
+iInterleave sep (seq:rest) = iConcat [ sep, seq,
+                                       (iInterleave sep rest) ]
 
 iDisplay :: Iseq -> String
 iDisplay seq = flatten 0 [(seq, 0)]
