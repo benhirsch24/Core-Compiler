@@ -119,6 +119,14 @@ primStep state Sub = primArith state (-)
 primStep state Mul = primArith state (*)
 primStep state Div = primArith state (div)
 
+-- primSteps for comparison operators
+primStep state Greater = primComp state (>)
+primStep state GreaterEq = primComp state (>=)
+primStep state Less = primComp state (<)
+primStep state LessEq = primComp state (<=)
+primStep state Eq = primComp state (==)
+primStep state NotEq = primComp state (/=)
+
 --primStep for Constrs
 primStep (stack, dump, heap, globals, stats) (PrimConstr tag arity) =
    let arg_addrs = getArgs heap stack
@@ -127,10 +135,10 @@ primStep (stack, dump, heap, globals, stats) (PrimConstr tag arity) =
    in  (an:[], dump, hUpdate heap an data_node, globals, stats)
 
 --primStep for IF
-primStep (stack, dump, heap, globals, stats) If =
+primStep (stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) If =
    case hLookup heap condition of -- second object on stack should be condition
       (NData tag addrs) -> let exp = if tag == 1 then exp2 else exp1 
-                           in  (exp:[], dump, heap, globals, stats)
+                           in  (a3:[], dump, hUpdate heap a3 $ hLookup heap exp, globals, stats)
       otherwise         -> (condition:[], stack:dump, heap, globals, stats)
    where
    inst_addrs = getArgs heap stack
@@ -138,31 +146,34 @@ primStep (stack, dump, heap, globals, stats) If =
    exp1 = inst_addrs !! 1
    exp2 = inst_addrs !! 2
 
-   
-   
+primDyadic :: TiState -> (Node -> Node -> Node) -> TiState
+primDyadic (stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
+   let (n1:n2:[]) = map (hLookup heap) $ getArgs heap stack
+       (addr1:addr2:[]) = getArgs heap stack
+   in  case n1 of
+         NNum na -> case n2 of
+                  NNum nb -> (a2:[], dump, hUpdate heap a2 $ fun n1 n2, globals, stats)
+                  NAp _ _ -> (addr2:[], stack:dump, heap, globals, stats)
+                  otherwise -> error "error in primDyadic not nnum or nap"
+         NAp _ _ -> (addr1:[], stack:dump, heap, globals, stats)
+         otherwise -> error "error in primDyadic not nnum or nap"
 
-primArith :: TiState -> (Int -> Int -> Int) -> TiState
-primArith (stack@(a:a1:a2:[]), dump, heap, globals, stats) op = 
-   handleA1 $ head inst_args
+primComp :: TiState -> (Int -> Int -> Bool) -> TiState
+primComp state op =
+   primDyadic state (compFun op) 
    where
-   inst_addrs    = getArgs heap stack
-   inst_args     = map (hLookup heap) inst_addrs
-   handleA1 (NNum n) = handleA2 (last inst_args) n
-   handleA1 _        = ((head inst_addrs):[], stack:dump, heap, globals, stats)
-   handleA2 (NNum z) n = (a2:[], dump, hUpdate heap a2 $ NNum (n `op` z), globals, stats)
-   handleA2 _        n  = ((last inst_addrs):[], stack:dump, heap, globals, stats)
-
-{--
+   compFun op (NNum a) (NNum b) = let tag = if a `op` b
+                                            then 2
+                                            else 1
+                                  in  NData tag []
+   compFun op _ _ = error "That's not Jack"
+       
 primArith :: TiState -> (Int -> Int -> Int) -> TiState
-primArith (all@(prim:stack), dump, heap, globals, stats) op = 
-   let inst_addrs = getArgs heap all 
-   in  handleArith [] inst_addrs (hLookup heap $ head inst_addrs)
+primArith state op =
+   primDyadic state (arithFun op)
    where
-   handleArith :: [Int] -> [Addr] -> Node -> TiState
-   handleArith sum_list (ap:[]) (NNum n) = (ap:[], dump, hUpdate heap ap $ NNum $ foldr op n sum_list, globals, stats)
-   handleArith sum_list (ap:stk) (NNum n) = handleArith (n:sum_list) stk $ hLookup heap $ head stk
-   handleArith sum_list (ap:stk) _ = (ap:[], (all:dump), heap, globals, stats)
---}
+   arithFun op (NNum a) (NNum b) = (NNum (a `op` b))
+   arithFun op _ _ = error "Wrong data nodes"
 
 numStep :: TiState -> Int -> TiState
 numStep (a:[], dump, heap, globals, stats) n
@@ -225,8 +236,8 @@ instantiateAndUpdate (EVar v) upd_addr heap env
    = hUpdate heap upd_addr $ NInd $ aLookup env v (error "Can't find var")
 instantiateAndUpdate (ENum n) upd_addr heap env
    = hUpdate heap upd_addr (NNum n)
-instantiateAndUpdate (EConstr tag arity) upd_addr heap env
-   = error "Can't instandup constrs yet"
+instantiateAndUpdate (EConstr tag arity) upd_addr heap env =
+   hUpdate heap upd_addr $ NPrim "Pack" $ PrimConstr tag arity
 instantiateAndUpdate (EAp e1 e2) upd_addr heap env
    = let (heap1, a1) = instantiate e1 heap env
          (heap2, a2) = instantiate e2 heap1 env
