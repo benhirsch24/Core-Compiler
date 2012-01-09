@@ -56,4 +56,7 @@ extraPreludeDefs
        ("and", ["x", "y"], EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "y")) (EVar "False")),
        ("or", ["x", "y"], EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "x")) (EAp (EAp (EAp (EVar "if") (EVar "y")) (EVar "y")) (EVar "False"))),
        ("not", ["x"], EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "x")) (EVar "False")),
-       ("xor", ["x", "y"], EAp (EAp (EVar "and") (EAp (EVar "not") (EAp (EAp (EVar "and") (EVar "x")) (EVar "y")))) (EAp (EAp (EVar "or") (EVar "x")) (EVar "y"))) ]
+       ("xor", ["x", "y"], EAp (EAp (EVar "and") (EAp (EVar "not") (EAp (EAp (EVar "and") (EVar "x")) (EVar "y")))) (EAp (EAp (EVar "or") (EVar "x")) (EVar "y"))),
+       ("MkPair", [], EConstr 1 2),
+       ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K")),
+       ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K1")) ]

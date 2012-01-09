@@ -45,6 +45,7 @@ data Primitive = Neg
                | LessEq
                | Eq
                | NotEq
+               | CasePair
                deriving (Show)
 
 primitives :: ASSOC Name Primitive
@@ -54,7 +55,8 @@ primitives = [ ("negate", Neg),
                ("if",     If),  (">", Greater),
                (">=",     GreaterEq),
                ("<",      Less), ("<=", LessEq),
-               ("==",     Eq),  ("!=", NotEq)
+               ("==",     Eq),  ("!=", NotEq),
+               ("casePair", CasePair)
              ]
 
 compile :: CoreProgram -> TiState
@@ -127,11 +129,28 @@ primStep state LessEq = primComp state (<=)
 primStep state Eq = primComp state (==)
 primStep state NotEq = primComp state (/=)
 
+-- primStep for casePair
+primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
+   let arg_addrs@(addr1:addr2:[]) = getArgs heap stack
+       (n1:n2:[]) = map (hLookup heap) arg_addrs
+   in  case n1 of
+         NData tag (data_addr1:data_addr2:[]) -> 
+            case n2 of
+               NSupercomb name args body ->
+                  let (new_heap, addr) = hAlloc heap $ NAp addr2 data_addr1
+                  in  (addr2:addr:a2:[], dump, hUpdate new_heap a2 $ NAp addr data_addr2, globals, stats)
+               NAp nap1 nap2 -> (addr2:[], stack:dump, heap, globals, stats)
+               otherwise -> error "casePair f not a supercomb or ap"
+         NAp na1 na2 -> (addr1:[], stack:dump, heap, globals, stats)
+         otherwise -> error "casePair not a ndata or nap"
+   
+   
+
 --primStep for Constrs
 primStep (stack, dump, heap, globals, stats) (PrimConstr tag arity) =
    let arg_addrs = getArgs heap stack
        an        = last stack -- root of the redex
-       data_node = NData tag $ tail stack
+       data_node = NData tag arg_addrs 
    in  (an:[], dump, hUpdate heap an data_node, globals, stats)
 
 --primStep for IF
@@ -197,8 +216,10 @@ scStep (stack, dump, heap, globals, stats) sc_name arg_names body
    | otherwise         = error "Not applied to enough args"
 
 indStep :: TiState -> Addr -> TiState
-indStep ((a:stack), dump, heap, globals, stats) addr = (addr:stack, dump, heap, globals, stats)
+indStep ((a:stack), dump, heap, globals, stats) addr = (addr:stack, dump, hUpdate heap a (hLookup heap addr), globals, stats)
 
+-- stupid having the sc taken off the top but it works right now.
+-- Fix Later
 getArgs :: TiHeap -> TiStack -> [Addr]
 getArgs heap (sc:stack) = map getArg stack
    where getArg addr = arg
@@ -213,12 +234,10 @@ instantiate (EAp e1 e2) heap env = hAlloc heap2 (NAp a1 a2)
    (heap2, a2) = instantiate e2 heap1 env
 instantiate (EVar v) heap env = (heap, aLookup env v (error ("Undefined name " ++ show v)))
 instantiate (EConstr tag arity) heap env
-   = instantiateConstr tag arity heap env
+   = hAlloc heap $ NPrim "Pack" (PrimConstr tag arity)
 instantiate (ELet isrec defs body) heap env
    = instantiateLet isrec defs body heap env
 instantiate (ECase e alts) heap env = error "Can't instantiate case exprs"
-instantiateConstr tag arity heap env = hAlloc heap $ NPrim "Pack" (PrimConstr tag arity)
-
 instantiateLet isrec defs body heap env 
    = if isrec then recursiveLet else nonrecursiveLet
    where
