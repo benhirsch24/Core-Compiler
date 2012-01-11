@@ -46,6 +46,10 @@ data Primitive = Neg
                | Eq
                | NotEq
                | CasePair
+               | CaseList
+               | Abort
+               | Stop
+               | Print
                deriving (Show)
 
 primitives :: ASSOC Name Primitive
@@ -56,7 +60,9 @@ primitives = [ ("negate", Neg),
                (">=",     GreaterEq),
                ("<",      Less), ("<=", LessEq),
                ("==",     Eq),  ("!=", NotEq),
-               ("casePair", CasePair)
+               ("casePair", CasePair), ("caseList", CaseList),
+               ("abort", Abort), ("stop", Stop),
+               ("print", Print)
              ]
 
 compile :: CoreProgram -> TiState
@@ -129,6 +135,13 @@ primStep state LessEq = primComp state (<=)
 primStep state Eq = primComp state (==)
 primStep state NotEq = primComp state (/=)
 
+-- printing
+primStep state Stop = ([], [], heap, globals, stats)
+primStep state Print
+
+-- primStep Abort!
+primStep state Abort = error "Aborted"
+
 -- primStep for casePair
 primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
    let arg_addrs@(addr1:addr2:[]) = getArgs heap stack
@@ -145,6 +158,22 @@ primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
          otherwise -> error "casePair not a ndata or nap"
    
    
+-- primStep caseList
+-- stack is: caseList:list:cn:cc:[])
+-- a3: cc
+-- b: NAp a3 (head addrs)
+-- b1: NAp b (last addrs)
+primStep state@(stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) CaseList =
+   case li of
+      NData tag addrs ->
+         case tag of
+            1 -> (cn:[], dump, hUpdate heap cc $ NInd cn, globals, stats)
+            2 -> let (heap', addr) = hAlloc heap $ NAp cc (head addrs)
+                 in  (a3:[], dump, hUpdate heap' a3 $ NAp addr (last addrs), globals, stats)
+      otherwise -> (liaddr:[], stack:dump, heap, globals, stats)
+   where
+   arg_addrs@(liaddr:cn:cc:[]) = getArgs heap stack
+   (li:_:_:[]) = map (hLookup heap) arg_addrs
 
 --primStep for Constrs
 primStep (stack, dump, heap, globals, stats) (PrimConstr tag arity) =
@@ -286,7 +315,10 @@ applyToStats stats_fun (stack, dump, heap, sc_defs, stats) =
 tiFinal :: TiState -> Bool
 tiFinal ([], _, _, _, _) = error "Empty Stack!"
 tiFinal (addr:rest, dump, heap, globals, stats)
-   | length rest == 0 && length dump == 0 = isDataNode $ hLookup heap addr
+   | length rest == 0 && length dump == 0 =
+      case hLookup heap addr of
+         NPrim _ Stop -> True
+         otherwise -> isDataNode $ hLookup heap addr
    | otherwise       = False
 
 isDataNode :: Node -> Bool
