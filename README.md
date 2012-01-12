@@ -11,5 +11,6 @@ And there's no answers to exercises so I actually have to work it out :)
 * Writing the Parser as a monad
 * Write Pratt Parser
 * Use Haskell parser module Parsec
-* Add data constructors like Haskell (instead of the Pack{1,2} stuff)
+* Add data constructors like Haskell (instead of the Pack{1,2} stuff) \*NM I understand now. Supercomb = Pack{tag, arity} makes sense now. But it would still be cool to learn how to implement ADTs and stuff but I'll probably just look it up in ghc
 * Type checking
+* I *think* the entire compiler can be written as a state monad... when I finish chapter 2 maybe I'll look into that
