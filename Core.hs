@@ -59,7 +59,8 @@ primitives = [ ("negate", Neg),
                (">=",     GreaterEq),
                ("<",      Less), ("<=", LessEq),
                ("==",     Eq),  ("!=", NotEq),
-               ("casePair", CasePair), ("caseList", CaseList)
+               ("casePair", CasePair), ("caseList", CaseList),
+               ("abort", Abort)
              ]
 
 compile :: CoreProgram -> TiState
@@ -183,10 +184,7 @@ primStep (stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) If =
                            in  (a3:[], dump, hUpdate heap a3 $ hLookup heap exp, globals, stats)
       otherwise         -> (condition:[], stack:dump, heap, globals, stats)
    where
-   inst_addrs = getArgs heap stack
-   condition = inst_addrs !! 0
-   exp1 = inst_addrs !! 1
-   exp2 = inst_addrs !! 2
+   (condition:exp1:exp2:[]) = getArgs heap stack
 
 primDyadic :: TiState -> (Node -> Node -> Node) -> TiState
 primDyadic (stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
@@ -196,9 +194,10 @@ primDyadic (stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
          NNum na -> case n2 of
                   NNum nb -> (a2:[], dump, hUpdate heap a2 $ fun n1 n2, globals, stats)
                   NAp _ _ -> (addr2:[], stack:dump, heap, globals, stats)
-                  otherwise -> error "error in primDyadic not nnum or nap"
+                  otherwise -> error "error in primDyadic not nnum or nap2"
          NAp _ _ -> (addr1:[], stack:dump, heap, globals, stats)
-         otherwise -> error "error in primDyadic not nnum or nap"
+         NSupercomb _ _ _ -> (addr1:[], stack:dump, heap, globals, stats)
+         otherwise -> error "error in primDyadic not nnum or nap1"
 
 primComp :: TiState -> (Int -> Int -> Bool) -> TiState
 primComp state op =
