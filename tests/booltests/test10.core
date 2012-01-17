@@ -1,0 +1,3 @@
+main = if mycond 3 4;
+
+mycond = not True

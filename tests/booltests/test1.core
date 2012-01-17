@@ -1,0 +1,1 @@
+main = if True 3 4

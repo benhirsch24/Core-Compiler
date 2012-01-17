@@ -1,0 +1,9 @@
+main = if mycond1 4 5;
+
+mycond1 = not mycond2;
+
+mycond2 = and True mycond3;
+
+mycond3 = or False mycond4;
+
+mycond4 = xor (not True) (not (not False))
