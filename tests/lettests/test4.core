@@ -1,0 +1,4 @@
+main = let x = myX
+       in  x + 5;
+
+myX = 6

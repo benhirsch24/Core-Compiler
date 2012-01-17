@@ -1,0 +1,3 @@
+main = head (tail (tail (infinite 4)));
+
+infinite x = letrec xs = Cons x xs in xs
