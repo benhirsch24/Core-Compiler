@@ -1,0 +1,3 @@
+main = fst myPair ;
+
+myPair = MkPair 3 4

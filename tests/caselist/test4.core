@@ -1,0 +1,5 @@
+main = casePair myPair myFst ;
+
+myFst f s = f ;
+
+myPair = MkPair 3 4

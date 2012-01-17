@@ -1,0 +1,5 @@
+main = casePair myPair myAddSnd;
+
+myAddSnd f s = s + 4;
+
+myPair = MkPair 3 4

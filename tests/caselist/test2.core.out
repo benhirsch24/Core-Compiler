@@ -1,0 +1,772 @@
+   1) Stk [
+   1: NSupercomb main
+ ]
+ Heap [
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+   1: NSupercomb main
+ ]
+ Dump [
+ ]
+
+   2) Stk [
+   1: NAp   16   40 (NAp 38 39)
+ ]
+ Heap [
+   1: NAp   16   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+   3) Stk [
+  16: NSupercomb snd
+   1: NAp   16   40 (NAp 38 39)
+ ]
+ Heap [
+   1: NAp   16   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+   4) Stk [
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ Heap [
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+   5) Stk [
+  41: NAp   35   40 (NAp 38 39)
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ Heap [
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+   6) Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NAp 38 39)
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ Heap [
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+   7) Stk [
+  40: NAp   38   39 (NNum 4)
+ ]
+ Heap [
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NAp 38 39)
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ ]
+
+   8) Stk [
+  38: NAp   14   37 (NNum 3)
+  40: NAp   38   39 (NNum 4)
+ ]
+ Heap [
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NAp 38 39)
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ ]
+
+   9) Stk [
+  14: NSupercomb MkPair
+  38: NAp   14   37 (NNum 3)
+  40: NAp   38   39 (NNum 4)
+ ]
+ Heap [
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  14: NSupercomb MkPair
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NAp 38 39)
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ ]
+
+  10) Stk [
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+  38: NAp   14   37 (NNum 3)
+  40: NAp   38   39 (NNum 4)
+ ]
+ Heap [
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NAp 38 39)
+  40: NAp   38   39 (NNum 4)
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NAp 38 39)
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ ]
+
+  11) Stk [
+  40: NData: 1  37 39 
+ ]
+ Heap [
+  40: NData: 1  37 39 
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NData: 1  37 39 )
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NData: 1  37 39 )
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ ]
+
+  12) Stk [
+  35: Primitive: casePair CasePair
+  41: NAp   35   40 (NData: 1  37 39 )
+   1: NAp   41    4 (NSupercomb K1)
+ ]
+ Heap [
+  40: NData: 1  37 39 
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+   1: NAp   41    4 (NSupercomb K1)
+  41: NAp   35   40 (NData: 1  37 39 )
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+  13) Stk [
+   4: NSupercomb K1
+  42: NAp    4   37 (NNum 3)
+   1: NAp   42   39 (NNum 4)
+ ]
+ Heap [
+   1: NAp   42   39 (NNum 4)
+  42: NAp    4   37 (NNum 3)
+  40: NData: 1  37 39 
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+  41: NAp   35   40 (NData: 1  37 39 )
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+  14) Stk [
+   1: NInd 39
+ ]
+ Heap [
+   1: NInd 39
+  42: NAp    4   37 (NNum 3)
+  40: NData: 1  37 39 
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+  41: NAp   35   40 (NData: 1  37 39 )
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+  15) Stk [
+  39: NNum 4
+ ]
+ Heap [
+   1: NNum 4
+  42: NAp    4   37 (NNum 3)
+  40: NData: 1  37 39 
+  14: Primitive: Pack PrimConstr {t = 1, a = 2}
+  41: NAp   35   40 (NData: 1  37 39 )
+  39: NNum 4
+  38: NAp   14   37 (NNum 3)
+  37: NNum 3
+  36: Primitive: caseList CaseList
+  35: Primitive: casePair CasePair
+  34: Primitive: != NotEq
+  33: Primitive: == Eq
+  32: Primitive: <= LessEq
+  31: Primitive: < Less
+  30: Primitive: >= GreaterEq
+  29: Primitive: > Greater
+  28: Primitive: if If
+  27: Primitive: / Div
+  26: Primitive: * Mul
+  25: Primitive: - Sub
+  24: Primitive: + Add
+  23: Primitive: negate Neg
+  22: NSupercomb printCons
+  21: NSupercomb printList
+  20: NSupercomb tail
+  19: NSupercomb head
+  18: NSupercomb Cons
+  17: NSupercomb Nil
+  16: NSupercomb snd
+  15: NSupercomb fst
+  13: NSupercomb xor
+  12: NSupercomb not
+  11: NSupercomb or
+  10: NSupercomb and
+   9: NSupercomb True
+   8: NSupercomb False
+   7: NSupercomb twice
+   6: NSupercomb compose
+   5: NSupercomb S
+   4: NSupercomb K1
+   3: NSupercomb K
+   2: NSupercomb I
+ ]
+ Dump [
+ ]
+
+
+
+Total number of steps = 14
