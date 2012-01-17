@@ -49,7 +49,6 @@ data Primitive = Neg
                | CaseList
                | Abort
                | Stop
-               | Print
                deriving (Show)
 
 primitives :: ASSOC Name Primitive
@@ -60,9 +59,7 @@ primitives = [ ("negate", Neg),
                (">=",     GreaterEq),
                ("<",      Less), ("<=", LessEq),
                ("==",     Eq),  ("!=", NotEq),
-               ("casePair", CasePair), ("caseList", CaseList),
-               ("abort", Abort), ("stop", Stop),
-               ("print", Print)
+               ("casePair", CasePair), ("caseList", CaseList)
              ]
 
 compile :: CoreProgram -> TiState
@@ -135,10 +132,6 @@ primStep state LessEq = primComp state (<=)
 primStep state Eq = primComp state (==)
 primStep state NotEq = primComp state (/=)
 
--- printing
-primStep state Stop = ([], [], heap, globals, stats)
-primStep state Print
-
 -- primStep Abort!
 primStep state Abort = error "Aborted"
 
@@ -155,7 +148,8 @@ primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
                NAp nap1 nap2 -> (addr2:[], stack:dump, heap, globals, stats)
                otherwise -> error "casePair f not a supercomb or ap"
          NAp na1 na2 -> (addr1:[], stack:dump, heap, globals, stats)
-         otherwise -> error "casePair not a ndata or nap"
+         NSupercomb _ _ _  -> (addr1:[], stack:dump, heap, globals, stats)
+         otherwise -> error "casePair not a ndata or nap or sc"
    
    
 -- primStep caseList

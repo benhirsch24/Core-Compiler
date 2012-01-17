@@ -59,8 +59,4 @@ extraPreludeDefs
        ("xor", ["x", "y"], EAp (EAp (EVar "and") (EAp (EVar "not") (EAp (EAp (EVar "and") (EVar "x")) (EVar "y")))) (EAp (EAp (EVar "or") (EVar "x")) (EVar "y"))),
        ("MkPair", [], EConstr 1 2),
        ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K")),
-       ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K1")),
-       ("Nil", [], EConstr 1 0),
-       ("Cons", [], EConstr 2 2),
-       ("head", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs")) (EVar "K")) (EVar "abort")),
-       ("tail", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs")) (EVar "abort")) (EVar "K1")) ]
+       ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K1")) ]
