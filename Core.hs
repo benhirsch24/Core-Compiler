@@ -115,7 +115,7 @@ dataStep _ _ _ = error "Shouldn't have gotten here"
 primStep :: TiState -> Primitive -> TiState
 -- primStep for Negate
 primStep (a:a1:[], dump, heap, globals, stats) Neg
-   = let (NAp z b) =  hLookup heap a1
+   = let (NAp _ b) =  hLookup heap a1
      in  case hLookup heap b of
             NNum n      -> (a1:[], dump, hUpdate heap a1 $ NNum (-n), globals, stats)
             otherwise   -> (b:[], (a1:[]):dump, heap, globals, stats)
@@ -137,6 +137,9 @@ primStep state NotEq = primComp state (/=)
 primStep state Abort = error "Aborted"
 
 -- primStep for casePair
+-- Primitive casePair
+-- NAp ^ Pair
+-- NAp ^ Function
 primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
    let arg_addrs@(addr1:addr2:[]) = getArgs heap stack
        (n1:n2:[]) = map (hLookup heap) arg_addrs
@@ -144,8 +147,9 @@ primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
          NData tag (data_addr1:data_addr2:[]) -> 
             case n2 of
                NSupercomb name args body ->
-                  let (new_heap, addr) = hAlloc heap $ NAp addr2 data_addr1
-                  in  (addr2:addr:a2:[], dump, hUpdate new_heap a2 $ NAp addr data_addr2, globals, stats)
+                  let (heap', addr) = hAlloc heap $ NAp addr2 data_addr1
+                      heap'' = hUpdate heap' a2 $ NAp addr data_addr2
+                  in  (addr2:addr:a2:[], dump, heap'', globals, stats)
                NAp nap1 nap2 -> (addr2:[], stack:dump, heap, globals, stats)
                otherwise -> error "casePair f not a supercomb or ap"
          NAp na1 na2 -> (addr1:[], stack:dump, heap, globals, stats)
@@ -154,18 +158,21 @@ primStep state@(stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
    
    
 -- primStep caseList
--- stack is: caseList:list:cn:cc:[])
--- a3: cc
--- b: NAp a3 (head addrs)
--- b1: NAp b (last addrs)
+-- Primitive caseList
+-- NAp ^ Cons
+-- NAp ^ cn
+-- NAp ^ cc
 primStep state@(stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) CaseList =
    case li of
-      NData tag addrs ->
+      NData tag (hd:tl:[]) ->
          case tag of
-            1 -> (cn:[], dump, hUpdate heap cc $ NInd cn, globals, stats)
-            2 -> let (heap', addr) = hAlloc heap $ NAp cc (head addrs)
-                 in  (a3:[], dump, hUpdate heap' a3 $ NAp addr (last addrs), globals, stats)
-      otherwise -> (liaddr:[], stack:dump, heap, globals, stats)
+            1 -> (a3:[], dump, hUpdate heap a3 $ NInd cn, globals, stats)
+            2 -> let (heap', addr) = hAlloc heap $ NAp cc hd
+                     heap'' = hUpdate heap' a3 $ NAp addr tl 
+                 in  (cc:addr:a3:[], dump, heap'', globals, stats)
+      NAp _ _ -> (liaddr:[], stack:dump, heap, globals, stats)
+      NSupercomb _ _ _ -> (liaddr:[], stack:dump, heap, globals, stats)
+      otherwise -> error "caselist list is not ndata nap or nsupercomb"
    where
    arg_addrs@(liaddr:cn:cc:[]) = getArgs heap stack
    (li:_:_:[]) = map (hLookup heap) arg_addrs
@@ -180,12 +187,20 @@ primStep (stack, dump, heap, globals, stats) (PrimConstr tag arity) =
 --primStep for IF
 primStep (stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) If =
    case hLookup heap condition of -- second object on stack should be condition
-      (NData tag addrs) -> let exp = if tag == 1 then exp2 else exp1 
-                           in  (a3:[], dump, hUpdate heap a3 $ hLookup heap exp, globals, stats)
-      otherwise         -> (condition:[], stack:dump, heap, globals, stats)
+      NData tag addrs -> let exp = if tag == 1 
+                                   then exp2
+                                   else exp1 
+                             heap' = hUpdate heap a3 $ NInd exp
+                         in  (a3:[], dump, heap', globals, stats)
+      NAp _ _ -> (condition:[], stack:dump, heap, globals, stats)
+      NSupercomb _ _ _ -> (condition:[], stack:dump, heap, globals, stats)
+      otherwise -> error "primStep IF, condition not ndata nap or nsupercomb"
    where
    (condition:exp1:exp2:[]) = getArgs heap stack
 
+-- primDyadic because there's arithmetic and boolean operators
+-- so arithmetic functions return an NNum,
+-- comparison functions return an NData (True/False)
 primDyadic :: TiState -> (Node -> Node -> Node) -> TiState
 primDyadic (stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
    let (n1:n2:[]) = map (hLookup heap) $ getArgs heap stack
@@ -199,6 +214,7 @@ primDyadic (stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
          NSupercomb _ _ _ -> (addr1:[], stack:dump, heap, globals, stats)
          otherwise -> error "error in primDyadic not nnum or nap1"
 
+-- comparison
 primComp :: TiState -> (Int -> Int -> Bool) -> TiState
 primComp state op =
    primDyadic state (compFun op) 
@@ -209,6 +225,7 @@ primComp state op =
                                   in  NData tag []
    compFun op _ _ = error "That's not Jack"
        
+-- arithmetic
 primArith :: TiState -> (Int -> Int -> Int) -> TiState
 primArith state op =
    primDyadic state (arithFun op)
@@ -240,14 +257,19 @@ scStep (stack, dump, heap, globals, stats) sc_name arg_names body
 indStep :: TiState -> Addr -> TiState
 indStep ((a:stack), dump, heap, globals, stats) addr = (addr:stack, dump, hUpdate heap a (hLookup heap addr), globals, stats)
 
--- stupid having the sc taken off the top but it works right now.
--- Fix Later
+{- getArgs gets the arguments off the stack.
+   So a stack looking like:
+   Prim Add
+   NAp _ 3
+   NAp _ 4
+
+   getArgs of that stack returns 3:4:[]
+-}
 getArgs :: TiHeap -> TiStack -> [Addr]
 getArgs heap (sc:stack) = map getArg stack
    where getArg addr = arg
                         where (NAp fun arg) = hLookup heap addr
 
--- body, heap b4 instant., names to addresses, heap after instan & address of root
 instantiate :: CoreExpr -> TiHeap -> ASSOC Name Addr -> (TiHeap, Addr)
 instantiate (ENum n) heap env = hAlloc heap (NNum n)
 instantiate (EAp e1 e2) heap env = hAlloc heap2 (NAp a1 a2)
