@@ -282,18 +282,14 @@ instantiate (EConstr tag arity) heap env
 instantiate (ELet isrec defs body) heap env
    = instantiateLet isrec defs body heap env
 instantiate (ECase e alts) heap env = error "Can't instantiate case exprs"
-instantiateLet isrec defs body heap env 
-   = if isrec then recursiveLet else nonrecursiveLet
+instantiateLet isrec defs body heap env =
+   instantiate body heap' env'
    where
+   (heap', defAddrs) = mapAccumL (oppInstantiate whichEnv) heap $ rhssOf defs
+   (env', _) = mapAccumL augEnv env $ zip (bindersOf defs) defAddrs
+   whichEnv = if isrec then env' else env
    oppInstantiate e h d = instantiate d h e
-   augEnv ev pair = (pair:ev, ())
-   nonrecursiveLet = let (heap', defAddrs) = mapAccumL (oppInstantiate env) heap $ rhssOf defs
-                         (newenv,_)   = mapAccumL augEnv env $ zip (bindersOf defs) defAddrs
-                     in  instantiate body heap' newenv
-   recursiveLet = let (heap', defAddrs) = mapAccumL (oppInstantiate newenv) heap $ rhssOf defs
-                      (newenv,_) = mapAccumL augEnv env $ zip (bindersOf defs) defAddrs
-                  in  instantiate body heap' newenv
-
+   augEnv env pair = (pair:env, ())
 instantiateAndUpdate :: CoreExpr -> Addr -> TiHeap -> ASSOC Name Addr -> TiHeap
 instantiateAndUpdate (EVar v) upd_addr heap env
    = hUpdate heap upd_addr $ NInd $ aLookup env v (error "Can't find var")
