@@ -65,5 +65,7 @@ extraPreludeDefs
        ("head", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs")) (EVar "abort")) (EVar "K")),
        ("tail", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs")) (EVar "abort")) (EVar "K1")),
        ("length", ["xs"], EAp (EAp (EAp (EVar "caseList")  (EVar "xs")) (ENum 0)) (EVar "length'")),
-       ("length'", ["x", "xs"], EAp (EVar "+") (EAp (EVar "length") (EVar "xs")))
+       ("length'", ["x", "xs"], EAp (EVar "+") (EAp (EVar "length") (EVar "xs"))),
+       ("printList", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs")) (EVar "stop")) (EVar "printCons")),
+       ("printCons", ["h", "t"], EAp (EAp (EVar "print") (EVar "h")) (EAp (EVar "printList") (EVar "t")))
         ]

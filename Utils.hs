@@ -47,6 +47,7 @@ showAddr a = "#" ++ shownum a
 
 type ASSOC a b = [(a,b)]
 
+-- ASSOC a b -> a -> continuation -> b
 aLookup [] k' def = def
 aLookup ((k,v):rest) k' def
    | k == k' = v
