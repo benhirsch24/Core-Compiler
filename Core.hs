@@ -33,37 +33,25 @@ data Node = NAp Addr Addr
           | NPrim Name Primitive
           | NData Int [Addr]
 
-data Primitive = Neg
-               | Add
-               | Sub
-               | Mul
-               | Div
-               | PrimConstr {t :: Int, a :: Int}
-               | If
-               | Greater
-               | GreaterEq
-               | Less
-               | LessEq
-               | Eq
-               | NotEq
-               | CasePair
-               | CaseList
-               | Abort
-               | Stop
-               | Print
-               deriving (Show)
+type Primitive = TiState -> TiState
 
-primitives :: ASSOC Name Primitive
-primitives = [ ("negate", Neg),
-               ("+",      Add), ("-", Sub),
-               ("*",      Mul), ("/", Div),
-               ("if",     If),  (">", Greater),
-               (">=",     GreaterEq),
-               ("<",      Less), ("<=", LessEq),
-               ("==",     Eq),  ("!=", NotEq),
-               ("casePair", CasePair), ("caseList", CaseList),
-               ("abort", Abort), ("stop", Stop),
-               ("print", Print)
+primitives :: [(Name, Primitive)]
+primitives = [ ("negate", primNeg),
+               ("+", primArith (+)),
+               ("-", primArith (-)),
+               ("*", primArith (*)),
+               ("/", primArith (div)),
+               ("<", primComp (<)),
+               ("<=", primComp (<=)),
+               (">", primComp (>)),
+               (">=", primComp (>=)),
+               ("==", primComp (==)),
+               ("!=", primComp (/=)),
+               ("casePair", primCasePair),
+               ("caseList", primCaseList),
+               ("abort", primAbort),
+               ("print", primPrint),
+               ("stop", primStop)
              ]
 
 compile :: CoreProgram -> TiState
@@ -111,7 +99,7 @@ step state@(ol, stack, dump, heap, globals, stats)
    dispatch (NAp a1 a2)               = apStep   state a1 a2
    dispatch (NSupercomb sc args body) = scStep   state sc args body
    dispatch (NInd addr)               = indStep  state addr
-   dispatch (NPrim name prim)         = primStep state prim
+   dispatch (NPrim name prim)         = primStep state prim 
    dispatch (NData tag addrs)         = dataStep state tag addrs
 
 dataStep :: TiState -> Int -> [Addr] -> TiState
@@ -119,34 +107,16 @@ dataStep (ol, (a:[]), dump, heap, globals, stats) tag addrs = (ol, head dump, ta
 dataStep _ _ _ = error "Shouldn't have gotten here"
 
 primStep :: TiState -> Primitive -> TiState
--- primStep for Negate
-primStep (ol, a:a1:[], dump, heap, globals, stats) Neg
-   = let (NAp _ b) =  hLookup heap a1
-     in  case hLookup heap b of
-            NNum n      -> (ol, a1:[], dump, hUpdate heap a1 $ NNum (-n), globals, stats)
-            otherwise   -> (ol, b:[], (a1:[]):dump, heap, globals, stats)
--- primSteps for + - * /
-primStep state Add = primArith state (+)
-primStep state Sub = primArith state (-)
-primStep state Mul = primArith state (*)
-primStep state Div = primArith state (div)
-
--- primSteps for comparison operators
-primStep state Greater = primComp state (>)
-primStep state GreaterEq = primComp state (>=)
-primStep state Less = primComp state (<)
-primStep state LessEq = primComp state (<=)
-primStep state Eq = primComp state (==)
-primStep state NotEq = primComp state (/=)
+primStep state prim = prim state
 
 -- primStep Abort!
-primStep state Abort = error "Aborted"
+primAbort state = error "Aborted"
 
 -- primStep for casePair
 -- Primitive casePair
 -- NAp ^ Pair
 -- NAp ^ Function
-primStep state@(ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
+primCasePair state@(ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) =
    let arg_addrs@(addr1:addr2:[]) = getArgs heap stack
        (n1:n2:[]) = map (hLookup heap) arg_addrs
    in  case n1 of
@@ -168,7 +138,7 @@ primStep state@(ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) CasePair =
 -- NAp ^ Cons
 -- NAp ^ cn
 -- NAp ^ cc
-primStep state@(ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) CaseList =
+primCaseList state@(ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) =
    case li of
       NData tag data_addrs ->
          case tag of
@@ -185,26 +155,19 @@ primStep state@(ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) CaseList 
    (li:_:_:[]) = map (hLookup heap) arg_addrs
 
 --primStep for Stop
-primStep (ol, stack, dump, heap, globals, stats) Stop =
+primStop (ol, stack, dump, heap, globals, stats) =
    (ol, [], [], heap, globals, stats)
 
 --primStep for Print
-primStep (ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) Print =
+primPrint (ol, stack@(a:a1:a2:[]), dump, heap, globals, stats)  =
    let args@(b1:b2:[]) = getArgs heap stack
        (n1:n2:[]) = map (hLookup heap) args
    in  case n1 of
          NNum num    -> (ol++[num], b2:[], [], heap, globals, stats)
          otherwise   -> (ol, b1:[], (a2:[]):[], heap, globals, stats)
 
---primStep for Constrs
-primStep (ol, stack, dump, heap, globals, stats) (PrimConstr tag arity) =
-   let arg_addrs = getArgs heap stack
-       an        = last stack -- root of the redex
-       data_node = NData tag arg_addrs 
-   in  (ol, an:[], dump, hUpdate heap an data_node, globals, stats)
-
 --primStep for IF
-primStep (ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) If =
+primIf (ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) =
    case hLookup heap condition of -- second object on stack should be condition
       NData tag addrs -> let exp = if tag == 1 
                                    then exp2
@@ -234,8 +197,8 @@ primDyadic (ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
          otherwise -> error "error in primDyadic not nnum or nap1"
 
 -- comparison
-primComp :: TiState -> (Int -> Int -> Bool) -> TiState
-primComp state op =
+primComp :: (Int -> Int -> Bool) -> TiState -> TiState
+primComp op state =
    primDyadic state (compFun op) 
    where
    compFun op (NNum a) (NNum b) = let tag = if a `op` b
@@ -245,12 +208,22 @@ primComp state op =
    compFun op _ _ = error "That's not Jack"
        
 -- arithmetic
-primArith :: TiState -> (Int -> Int -> Int) -> TiState
-primArith state op =
+primArith ::  (Int -> Int -> Int) -> TiState -> TiState
+primArith op state =
    primDyadic state (arithFun op)
    where
    arithFun op (NNum a) (NNum b) = (NNum (a `op` b))
    arithFun op _ _ = error "Wrong data nodes"
+
+primNeg :: TiState -> TiState
+primNeg (ol, stack@(a:a1:[]), dump, heap, globals, stats) =
+   case hLookup heap arg1 of
+      NNum z1 -> (ol, a1:[], dump, hUpdate heap a1 $ NNum (-z1), globals, stats)
+      NAp _ _ -> (ol, arg1:[], stack:dump, heap, globals, stats)
+      otherwise -> error "primNeg, not nnum or nap"
+   where
+   (arg1:[]) = getArgs heap stack
+   
 
 numStep :: TiState -> Int -> TiState
 numStep (ol, a:[], dump, heap, globals, stats) n
@@ -296,8 +269,8 @@ instantiate (EAp e1 e2) heap env = hAlloc heap2 (NAp a1 a2)
    (heap1, a1) = instantiate e1 heap env
    (heap2, a2) = instantiate e2 heap1 env
 instantiate (EVar v) heap env = (heap, aLookup env v (error ("Undefined name " ++ show v)))
-instantiate (EConstr tag arity) heap env
-   = hAlloc heap $ NPrim "Pack" (PrimConstr tag arity)
+--instantiate (EConstr tag arity) heap env
+--   = hAlloc heap $ NPrim "Pack" (PrimConstr tag arity)
 instantiate (ELet isrec defs body) heap env
    = instantiateLet isrec defs body heap env
 instantiate (ECase e alts) heap env = error "Can't instantiate case exprs"
@@ -314,8 +287,6 @@ instantiateAndUpdate (EVar v) upd_addr heap env
    = hUpdate heap upd_addr $ NInd $ aLookup env v (error "Can't find var")
 instantiateAndUpdate (ENum n) upd_addr heap env
    = hUpdate heap upd_addr (NNum n)
-instantiateAndUpdate (EConstr tag arity) upd_addr heap env =
-   hUpdate heap upd_addr $ NPrim "Pack" $ PrimConstr tag arity
 instantiateAndUpdate (EAp e1 e2) upd_addr heap env
    = let (heap1, a1) = instantiate e1 heap env
          (heap2, a2) = instantiate e2 heap1 env
@@ -347,7 +318,7 @@ tiFinal (_, [], _, _, _, _) = error "Empty Stack!"
 tiFinal (ol, addr:rest, dump, heap, globals, stats)
    | length rest == 0 && length dump == 0 =
       case hLookup heap addr of
-         NPrim _ Stop -> True
+         NPrim _ primStop -> True
          otherwise -> isDataNode $ hLookup heap addr
    | otherwise       = False
 
@@ -417,7 +388,7 @@ showNode (NAp a1 a2) = iConcat [ iStr "NAp ", Main.showAddr a1,
 showNode (NSupercomb name args body) = iStr ("NSupercomb " ++ name)
 showNode (NNum n) = (iStr "NNum ") `iAppend` (iNum n)
 showNode (NInd addr) = iStr "NInd " `iAppend` Main.showAddr addr
-showNode (NPrim name prim) = iStr ("Primitive: " ++ name ++ " " ++ show prim)
+showNode (NPrim name prim) = iStr ("Primitive: " ++ name)
 showNode (NData tag addrs)
    = iConcat [ iStr ("NData: " ++ show tag ++ " "),
                iInterleave (iStr " ") $ map Main.showAddr addrs ]
