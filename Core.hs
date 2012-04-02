@@ -47,8 +47,6 @@ primitives = [ ("negate", primNeg),
                (">=", primComp (>=)),
                ("==", primComp (==)),
                ("!=", primComp (/=)),
-               ("casePair", primCasePair),
-               ("caseList", primCaseList),
                ("abort", primAbort),
                ("print", primPrint),
                ("stop", primStop)
@@ -112,48 +110,6 @@ primStep state prim = prim state
 -- primStep Abort!
 primAbort state = error "Aborted"
 
--- primStep for casePair
--- Primitive casePair
--- NAp ^ Pair
--- NAp ^ Function
-primCasePair state@(ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) =
-   let arg_addrs@(addr1:addr2:[]) = getArgs heap stack
-       (n1:n2:[]) = map (hLookup heap) arg_addrs
-   in  case n1 of
-         NData tag (data_addr1:data_addr2:[]) -> 
-            case n2 of
-               NSupercomb name args body ->
-                  let (heap', addr) = hAlloc heap $ NAp addr2 data_addr1
-                      heap'' = hUpdate heap' a2 $ NAp addr data_addr2
-                  in  (ol, addr2:addr:a2:[], dump, heap'', globals, stats)
-               NAp nap1 nap2 -> (ol, addr2:[], stack:dump, heap, globals, stats)
-               otherwise -> error "casePair f not a supercomb or ap"
-         NAp na1 na2 -> (ol, addr1:[], stack:dump, heap, globals, stats)
-         NSupercomb _ _ _  -> (ol, addr1:[], stack:dump, heap, globals, stats)
-         otherwise -> error "casePair not a ndata or nap or sc"
-   
-   
--- primStep caseList
--- Primitive caseList
--- NAp ^ Cons
--- NAp ^ cn
--- NAp ^ cc
-primCaseList state@(ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) =
-   case li of
-      NData tag data_addrs ->
-         case tag of
-            1 -> (ol, a3:[], dump, hUpdate heap a3 $ NInd cn, globals, stats)
-            2 -> let (heap', addr) = hAlloc heap $ NAp cc hd
-                     heap'' = hUpdate heap' a3 $ NAp addr tl 
-                     (hd:tl:[]) = data_addrs
-                 in  (ol, cc:addr:a3:[], dump, heap'', globals, stats)
-      NAp _ _ -> (ol, liaddr:[], stack:dump, heap, globals, stats)
-      NSupercomb _ _ _ -> (ol, liaddr:[], stack:dump, heap, globals, stats)
-      otherwise -> error "caselist list is not ndata nap or nsupercomb"
-   where
-   arg_addrs@(liaddr:cn:cc:[]) = getArgs heap stack
-   (li:_:_:[]) = map (hLookup heap) arg_addrs
-
 --primStep for Stop
 primStop (ol, stack, dump, heap, globals, stats) =
    (ol, [], [], heap, globals, stats)
@@ -166,30 +122,17 @@ primPrint (ol, stack@(a:a1:a2:[]), dump, heap, globals, stats)  =
          NNum num    -> (ol++[num], b2:[], [], heap, globals, stats)
          otherwise   -> (ol, b1:[], (a2:[]):[], heap, globals, stats)
 
---primStep for IF
-primIf (ol, stack@(a:a1:a2:a3:[]), dump, heap, globals, stats) =
-   case hLookup heap condition of -- second object on stack should be condition
-      NData tag addrs -> let exp = if tag == 1 
-                                   then exp2
-                                   else exp1 
-                             heap' = hUpdate heap a3 $ NInd exp
-                         in  (ol, a3:[], dump, heap', globals, stats)
-      NAp _ _ -> (ol, condition:[], stack:dump, heap, globals, stats)
-      NSupercomb _ _ _ -> (ol, condition:[], stack:dump, heap, globals, stats)
-      otherwise -> error "primStep IF, condition not ndata nap or nsupercomb"
-   where
-   (condition:exp1:exp2:[]) = getArgs heap stack
-
 -- primDyadic because there's arithmetic and boolean operators
 -- so arithmetic functions return an NNum,
--- comparison functions return an NData (True/False)
+-- comparison functions returns NSupercomb  
 primDyadic :: TiState -> (Node -> Node -> Node) -> TiState
-primDyadic (ol, stack@(a:a1:a2:[]), dump, heap, globals, stats) fun =
-   let (n1:n2:[]) = map (hLookup heap) $ getArgs heap stack
-       (addr1:addr2:[]) = getArgs heap stack
+primDyadic (ol, stack@(a:a1:a2:rest), dump, heap, globals, stats) fun =
+   let stack' = a:a1:a2:[]
+       args@(addr1:addr2:[]) = getArgs heap stack'
+       (n1:n2:[]) = map (hLookup heap) args
    in  case n1 of
          NNum na -> case n2 of
-                  NNum nb -> (ol, a2:[], dump, hUpdate heap a2 $ fun n1 n2, globals, stats)
+                  NNum nb -> (ol, a2:rest, dump, hUpdate heap a2 $ fun n1 n2, globals, stats)
                   NAp _ _ -> (ol, addr2:[], stack:dump, heap, globals, stats)
                   otherwise -> error "error in primDyadic not nnum or nap2"
          NAp _ _ -> (ol, addr1:[], stack:dump, heap, globals, stats)
@@ -202,9 +145,9 @@ primComp op state =
    primDyadic state (compFun op) 
    where
    compFun op (NNum a) (NNum b) = let tag = if a `op` b
-                                            then 2
-                                            else 1
-                                  in  NData tag []
+                                            then NSupercomb "True" [] (EVar "True")
+                                            else NSupercomb "False" [] (EVar "False")
+                                  in tag 
    compFun op _ _ = error "That's not Jack"
        
 -- arithmetic
