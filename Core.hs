@@ -32,6 +32,7 @@ data Node = NAp Addr Addr
           | NInd Addr
           | NPrim Name Primitive
           | NData Int [Addr]
+          | NMarked Node
 
 type Primitive = TiState -> TiState
 
@@ -87,7 +88,13 @@ eval state = let rest_states = if tiFinal state
              in  state : rest_states
 
 doAdmin :: TiState -> TiState
-doAdmin state = applyToStats tiStatIncSteps state
+doAdmin state@(_, _, _, heap, _, _) =
+   let state' = if hSize heap > maxHeapSize
+                then gc state
+                else state
+   in  applyToStats tiStatIncSteps state'
+
+maxHeapSize = 100
 
 step :: TiState -> TiState
 step state@(ol, stack, dump, heap, globals, stats)
@@ -239,6 +246,51 @@ instantiateAndUpdate letExpr@(ELet isrec defs body) upd_addr heap env
      in  hUpdate heap' upd_addr (NInd addr)
 instantiateAndUpdate (ECase guard alts) upd_addr heap env
    = error "Can't do cases yet"
+
+gc :: TiState -> TiState
+gc state@(ol, stack, dump, heap, globals, stats) = 
+   (ol, stack, dump, scanHeap $ markHeap heap $ findRoots state, globals, stats)
+   where
+   markHeap heep [] = heep  
+   markHeap heep (s:rest) = markHeap (markFrom heep s) rest 
+
+
+findRoots :: TiState -> [Addr]
+findRoots (ol, stack, dump, heap, globals, stats) = findStackRoots stack ++ findDumpRoots dump ++ findGlobalRoots globals
+
+findStackRoots :: TiStack -> [Addr]
+findStackRoots = id 
+
+findDumpRoots :: TiDump -> [Addr]
+findDumpRoots = concat
+
+findGlobalRoots :: TiGlobals -> [Addr]
+findGlobalRoots = aRange
+
+markFrom :: TiHeap -> Addr -> TiHeap
+markFrom heap addr = 
+   let node = hLookup heap addr
+   in  case node of
+         NMarked _ -> heap
+         NAp a1 a2 -> let heap'  = hUpdate heap addr $ NMarked node
+                          heap'' = markFrom heap' a1
+                      in  markFrom heap'' a2
+         NData tag addrs -> let heap' = hUpdate heap addr $ NMarked node
+                            in  go heap' addrs
+         otherwise -> hUpdate heap addr $ NMarked node
+   where
+   go heep [] = heep
+   go heep (a:rest) = go (markFrom heep a) rest
+
+scanHeap :: TiHeap -> TiHeap
+scanHeap heap = go heap $ hAddresses heap
+   where
+   go heep [] = heep
+   go heep (a:addrs) = go (examine a heep) addrs
+   examine addr h =
+      case hLookup h addr of
+         NMarked n -> hUpdate h addr n 
+         otherwise -> hFree h addr
                             
 initialTiDump :: TiDump
 initialTiDump = []
@@ -335,6 +387,7 @@ showNode (NPrim name prim) = iStr ("Primitive: " ++ name)
 showNode (NData tag addrs)
    = iConcat [ iStr ("NData: " ++ show tag ++ " "),
                iInterleave (iStr " ") $ map Main.showAddr addrs ]
+showNode (NMarked n) = iStr "Marked " `iAppend` iConcat[ iStr "(", showNode n, iStr ")" ]
    
 
 showAddr :: Addr -> Iseq
