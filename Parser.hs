@@ -1,4 +1,5 @@
 module Parser where
+
 import Language
 import Data.Char (isSpace, isDigit, isAlpha, digitToInt)
 
