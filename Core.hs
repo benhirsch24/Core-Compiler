@@ -5,6 +5,7 @@ import Parser
 import PrettyPrint
 import Iseq
 import System.IO
+import Debug.Trace (trace)
 import qualified System.Environment as SysEnv
 
 main :: IO ()
@@ -248,39 +249,41 @@ instantiateAndUpdate (ECase guard alts) upd_addr heap env
    = error "Can't do cases yet"
 
 gc :: TiState -> TiState
-gc state@(ol, stack, dump, heap, globals, stats) = 
-   (ol, stack, dump, scanHeap $ markHeap heap $ findRoots state, globals, stats)
+gc (ol, stack, dump, heap, globals, stats) =
+   let (heap', stack') = markFromStack heap stack
+       (heap'', dump')  = markFromDump heap' dump
+       (heap''', globals') = markFromGlobals heap'' globals
+   in  (ol, stack', dump', scanHeap $ heap''', globals', stats)
+
+markFromStack :: TiHeap -> TiStack -> (TiHeap, TiStack)
+markFromStack heap stack = mapAccumL markFrom heap stack
+
+--TiDump = [TiStack] = [[Addr]] so mapAccumL markADump not markFrom
+--dumps isn't correct grammar but I don't care
+markFromDump :: TiHeap -> TiDump -> (TiHeap, TiDump)
+markFromDump heap dumps = mapAccumL markADump heap dumps
    where
-   markHeap heep [] = heep  
-   markHeap heep (s:rest) = markHeap (markFrom heep s) rest 
+   markADump heep dump = mapAccumL markFrom heep dump
 
+markFromGlobals :: TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
+markFromGlobals heap globals = 
+   let addrs = map snd globals
+       names = map fst globals
+       (heap', addrs') = mapAccumL markFrom heap addrs
+   in  (heap', zip names addrs)
 
-findRoots :: TiState -> [Addr]
-findRoots (ol, stack, dump, heap, globals, stats) = findStackRoots stack ++ findDumpRoots dump ++ findGlobalRoots globals
-
-findStackRoots :: TiStack -> [Addr]
-findStackRoots = id 
-
-findDumpRoots :: TiDump -> [Addr]
-findDumpRoots = concat
-
-findGlobalRoots :: TiGlobals -> [Addr]
-findGlobalRoots = aRange
-
-markFrom :: TiHeap -> Addr -> TiHeap
+markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
 markFrom heap addr = 
-   let node = hLookup heap addr
-   in  case node of
-         NMarked _ -> heap
-         NAp a1 a2 -> let heap'  = hUpdate heap addr $ NMarked node
-                          heap'' = markFrom heap' a1
-                      in  markFrom heap'' a2
-         NData tag addrs -> let heap' = hUpdate heap addr $ NMarked node
-                            in  go heap' addrs
-         otherwise -> hUpdate heap addr $ NMarked node
-   where
-   go heep [] = heep
-   go heep (a:rest) = go (markFrom heep a) rest
+   case hLookup heap addr of
+      NMarked _ -> (heap, addr)
+      NAp a1 a2 -> let (heap',b1) = markFrom heap a1
+                       (heap'',b2) = markFrom heap' a2
+                   in  (hUpdate heap'' addr $ NMarked $ NAp b1 b2, addr)
+      NData tag addrs -> let (heap', addrs') = mapAccumL markFrom heap addrs
+                             node   = NData tag addrs'
+                         in  (hUpdate heap' addr $ NMarked node, addr)
+      NInd a    -> markFrom heap a
+      otherwise -> (hUpdate heap addr $ NMarked $ hLookup heap addr, addr)
 
 scanHeap :: TiHeap -> TiHeap
 scanHeap heap = go heap $ hAddresses heap
@@ -350,7 +353,8 @@ showHeap :: TiHeap -> TiStack -> Iseq
 showHeap heap stack
    = iConcat [ iNewline, iStr " Heap [",
                iIndent (iInterleave iNewline (map show_heap_item $ hAddresses heap)),
-               iStr " ]" ]
+               iStr " ], Length: ",
+               iStr $ show $ hSize heap ]
    where
    show_heap_item addr
       = iConcat [ showFWAddr addr, iStr ": ",
