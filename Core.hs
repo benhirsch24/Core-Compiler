@@ -7,6 +7,8 @@ import Iseq
 import System.IO
 import Debug.Trace (trace)
 import qualified System.Environment as SysEnv
+import Control.Monad
+import Control.Monad.State
 
 main :: IO ()
 main = do 
@@ -33,8 +35,9 @@ data Node = NAp Addr Addr
           | NInd Addr
           | NPrim Name Primitive
           | NData Int [Addr]
-          | NMarked Node
+          | NMarked MarkState Node
 
+data MarkState = Done | Visits Int
 type Primitive = TiState -> TiState
 
 primitives :: [(Name, Primitive)]
@@ -255,46 +258,97 @@ gc (ol, stack, dump, heap, globals, stats) =
        (heap''', globals') = markFromGlobals heap'' globals
    in  (ol, stack', dump', scanHeap $ heap''', globals', stats)
 
-markFromStack :: TiHeap -> TiStack -> (TiHeap, TiStack)
-markFromStack heap stack = mapAccumL markFrom heap stack
-
---TiDump = [TiStack] = [[Addr]] so mapAccumL markADump not markFrom
---dumps isn't correct grammar but I don't care
-markFromDump :: TiHeap -> TiDump -> (TiHeap, TiDump)
-markFromDump heap dumps = mapAccumL markADump heap dumps
+-- forward pointer, backward pointer, heap
+markFrom :: (Addr, Addr, TiHeap) -> (Addr, Addr, TiHeap)
+markFrom (forward, backward, heap) = trace ("node: " ++ show forward) $ 
+   case hLookup heap forward of
+      NMarked Done n -> if   isHNull backward
+                        then (forward, backward, heap)
+                        else markFrom $ backwardHandler $ hLookup heap backward
+      NAp a1 a2 -> markFrom (a1, forward, markNodeVisited 1 forward $ NAp backward a2)
+      NData tag addrs -> let node' = NData tag (backward : tail addrs)
+                         in  markFrom (head addrs, forward, markNodeVisited 1 forward node')
+      node@(NPrim name p)              -> markFrom (forward, backward, markForwardDone node)
+      node@(NSupercomb name args expr) -> markFrom (forward, backward, markForwardDone node)
+      node@(NNum num)                  -> markFrom (forward, backward, markForwardDone node)
+      NInd a -> markFrom (a, backward, heap)
    where
-   markADump heep dump = mapAccumL markFrom heep dump
+   markNodeDone addr node = hUpdate heap addr $ NMarked Done node
+   markForwardDone  = markNodeDone forward
+   markBackwardDone = markNodeDone backward
+   markNodeVisited visits addr node = hUpdate heap addr $ NMarked (Visits visits) node
+
+   {--
+     - if we've found a visited node and it's an NAp or NData, then move the hNull/backwards
+     - and forwards references around in the application/data addrs.
+     - Basically the hNull/orig backwards pointer
+     - floats to the end while the forwards pointer is moved to the
+     - next application addr/data addr.
+     - finally once they've all been done restore backwards pointer
+     -}
+   backwardHandler backwards_node = 
+      case backwards_node of
+          NMarked (Visits 1) (NAp b' a2) ->
+             let node' = NAp forward b'
+             in  markFrom (a2, backward, markNodeVisited 2 backward node')
+          NMarked (Visits 2) (NAp a1 b') -> 
+             let node' = NAp a1 forward
+             in  markFrom (backward, b', markBackwardDone node')
+          NMarked (Visits n_visits) (NData tag addrs) ->
+             let len_addrs = length addrs
+             in  if len_addrs == n_visits
+                 then let b' = last addrs
+                          addrs' = take (n_visits - 1) addrs ++ [forward]
+                          node' = NData tag addrs'
+                      in  markFrom (backward, b', markBackwardDone node')
+                 else let b' = addrs !! (n_visits - 1)
+                          a_n = addrs !! n_visits
+                          addrs' = take (n_visits - 1) addrs 
+                                         ++ [forward, b']
+                                         ++ drop (n_visits + 1) addrs
+                          node' = NData tag addrs'
+                      in  markFrom (a_n, backward, markNodeVisited (n_visits + 1) backward node')
+          otherwise -> error "issue with the backwards node, should be either an NAp or NData"
+
+{--
+ - accumLFn is a helper to make mapAccumL work
+ - basically we need to start the back pointer at hNull and the forward pointer 
+ - at whatever's provided
+ - but each markFromX function needs to return (TiHeap, TiStack) so this cleans it up
+ - to work with the pointer reversal markFrom
+ -}
+accumLFn h a = let (ret, _, heap') = markFrom (a, hNull, h)
+               in  (heap', ret)
+
+markFromStack :: TiHeap -> TiStack -> (TiHeap, TiStack)
+markFromStack heap stack = mapAccumL accumLFn heap stack
+
+{--
+  - TiDump = [TiStack] = [[Addr]] so mapAccumL markADump not markFrom
+  - dumps isn't technically correct but that's the best kind of incorrectness
+  -}
+markFromDump :: TiHeap -> TiDump -> (TiHeap, TiDump)
+markFromDump heap dumps = mapAccumL (\h d -> mapAccumL accumLFn h d) heap dumps
 
 markFromGlobals :: TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
 markFromGlobals heap globals = 
    let addrs = map snd globals
        names = map fst globals
-       (heap', addrs') = mapAccumL markFrom heap addrs
+       (heap', addrs') = mapAccumL accumLFn heap addrs
    in  (heap', zip names addrs)
 
-markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
-markFrom heap addr = 
-   case hLookup heap addr of
-      NMarked _ -> (heap, addr)
-      NAp a1 a2 -> let (heap',b1) = markFrom heap a1
-                       (heap'',b2) = markFrom heap' a2
-                   in  (hUpdate heap'' addr $ NMarked $ NAp b1 b2, addr)
-      NData tag addrs -> let (heap', addrs') = mapAccumL markFrom heap addrs
-                             node   = NData tag addrs'
-                         in  (hUpdate heap' addr $ NMarked node, addr)
-      NInd a    -> markFrom heap a
-      otherwise -> (hUpdate heap addr $ NMarked $ hLookup heap addr, addr)
 
 scanHeap :: TiHeap -> TiHeap
-scanHeap heap = go heap $ hAddresses heap
+scanHeap heap = 
+   let addrs = hAddresses heap
+   in  execState (mapM examine addrs) heap
    where
-   go heep [] = heep
-   go heep (a:addrs) = go (examine a heep) addrs
-   examine addr h =
-      case hLookup h addr of
-         NMarked n -> hUpdate h addr n 
-         otherwise -> hFree h addr
-                            
+   examine addr = do h <- get
+                     put $ nodeCase h addr $ hLookup h addr
+      where
+      nodeCase h addr (NMarked Done n) = hUpdate h addr n
+      nodeCase h addr _ = hFree h addr
+
 initialTiDump :: TiDump
 initialTiDump = []
 
@@ -391,7 +445,11 @@ showNode (NPrim name prim) = iStr ("Primitive: " ++ name)
 showNode (NData tag addrs)
    = iConcat [ iStr ("NData: " ++ show tag ++ " "),
                iInterleave (iStr " ") $ map Main.showAddr addrs ]
-showNode (NMarked n) = iStr "Marked " `iAppend` iConcat[ iStr "(", showNode n, iStr ")" ]
+showNode (NMarked mark n) = iStr "Marked " `iAppend` iConcat[ iStr "(", showMark mark, showNode n, iStr ")" ]
+
+showMark :: MarkState -> Iseq
+showMark Done = iStr "Done"
+showMark (Visits n) = iStr "Visits: " `iAppend` iStr (show n)
    
 
 showAddr :: Addr -> Iseq

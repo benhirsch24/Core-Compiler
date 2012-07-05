@@ -26,8 +26,8 @@ hSize (size, _, _) = size
 hNull :: Addr
 hNull = 0
 
-hIsNull :: Addr -> Bool
-hIsNull a = a == 0
+isHNull :: Addr -> Bool
+isHNull a = a == hNull
 
 remove :: [(Int, a)] -> Int -> [(Int, a)]
 remove [] a = error ("Attempt to update or free nonexistant address #" ++ shownum a)
