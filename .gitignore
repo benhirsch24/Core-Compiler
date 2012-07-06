@@ -2,4 +2,6 @@
 *.hi
 *.o
 *.swp
+*.err
+*.out
 Core
