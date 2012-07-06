@@ -260,7 +260,7 @@ gc (ol, stack, dump, heap, globals, stats) =
 
 -- forward pointer, backward pointer, heap
 markFrom :: (Addr, Addr, TiHeap) -> (Addr, Addr, TiHeap)
-markFrom (forward, backward, heap) = trace ("node: " ++ show forward) $ 
+markFrom (forward, backward, heap) = 
    case hLookup heap forward of
       NMarked Done n -> if   isHNull backward
                         then (forward, backward, heap)
